@@ -8,11 +8,11 @@
 #include "BattlegroundMgr.h"
 #include "BattlegroundQueue.h"
 #include "Chat.h"
-#include "DbcStores.h"
+#include "Config.h"
+#include "DBCStores.h"
 #include "Log.h"
 #include "Optional.h"
 #include "TaskScheduler.h"
-#include "Config.h"
 
 namespace
 {

@@ -103,7 +103,7 @@ public:
         sQueueListCache->Init();
     }
 
-    void OnUpdate(uint32 diff)
+    void OnUpdate(uint32 diff) override
     {
         sQueueListCache->Update(diff);
     }
