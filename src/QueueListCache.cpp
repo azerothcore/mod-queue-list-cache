@@ -57,17 +57,21 @@ QueueListCache* QueueListCache::instance()
     return &instance;
 }
 
-void QueueListCache::Init()
+void QueueListCache::Init(bool reload /*= false*/)
 {
     _isEnableSystem = sConfigMgr->GetOption<bool>("QLC.Enable", false);
 
-    if (!_isEnableSystem)
+    if (!_isEnableSystem && !reload)
     {
         // Skip loading if module disable
         LOG_INFO("server.loading", "> System disable");
         return;
     }
 
+    // Add support for reload config
+    scheduler.CancelAll();
+
+    // Make new task for update all cache
     scheduler.Schedule(Seconds(sConfigMgr->GetOption<uint32>("QLC.Update.Delay", 5)), [&](TaskContext context)
     {
         UpdateArenaRated();
@@ -77,7 +81,11 @@ void QueueListCache::Init()
         context.Repeat();
     });
 
-    LOG_INFO("server.loading", "> System loaded");
+    if (!reload)
+    {
+        // Added info about loading system
+        LOG_INFO("server.loading", "> System loaded");
+    }
 }
 
 void QueueListCache::Update(uint32 diff)

@@ -23,7 +23,7 @@ class AC_GAME_API QueueListCache
 public:
     static QueueListCache* instance();
 
-    void Init();
+    void Init(bool reload = false);
     void Update(uint32 diff);
 
     // Show queue status

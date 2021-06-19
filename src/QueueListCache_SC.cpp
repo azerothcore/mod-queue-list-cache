@@ -97,10 +97,15 @@ class QueueListCache_World : public WorldScript
 public:
     QueueListCache_World() : WorldScript("QueueListCache_World") { }
 
+    void OnBeforeConfigLoad(bool reload) override
+    {
+        sQueueListCache->Init(reload);
+    }
+
     void OnStartup() override
     {
         LOG_INFO("server.loading", "Loading Queue cache...");
-        sQueueListCache->Init();
+        sQueueListCache->Init(false);
     }
 
     void OnUpdate(uint32 diff) override
