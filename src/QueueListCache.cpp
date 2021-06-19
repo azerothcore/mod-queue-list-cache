@@ -270,6 +270,12 @@ void QueueListCache::UpdateBg()
 
 void QueueListCache::ShowArenaRated(ChatHandler* handler)
 {
+    if (!_isEnableSystem)
+    {
+        handler->SendSysMessage("# Module for check queue is disabled");
+        return;
+    }
+
     if (queueArenaRatedList.empty())
     {
         handler->SendSysMessage("> All queues empty");
@@ -288,6 +294,12 @@ void QueueListCache::ShowArenaRated(ChatHandler* handler)
 
 void QueueListCache::ShowArenaNonRated(ChatHandler* handler)
 {
+    if (!_isEnableSystem)
+    {
+        handler->SendSysMessage("# Module for check queue is disabled");
+        return;
+    }
+
     if (queueArenaNonRatedList.empty())
     {
         handler->SendSysMessage("> All queues empty");
@@ -306,6 +318,12 @@ void QueueListCache::ShowArenaNonRated(ChatHandler* handler)
 
 void QueueListCache::ShowBg(ChatHandler* handler)
 {
+    if (!_isEnableSystem)
+    {
+        handler->SendSysMessage("# Module for check queue is disabled");
+        return;
+    }
+
     auto ShowQueueStatus = [&](std::vector<QueueBgTemplate>& listQueue)
     {
         if (listQueue.empty())
