@@ -3,16 +3,11 @@
  * Copyright (C) 2021+ WarheadCore <https://github.com/WarheadCore>
  */
 
-#ifndef _QUEUE_LIST_CACHE_LOADER_H_
-#define _QUEUE_LIST_CACHE_LOADER_H_
-
 // From SC
 void AddSC_QueueListCache();
 
 // Add all
-void AddQueueListCacheScripts()
+void Addmod_queue_list_cacheScripts()
 {
-   AddSC_QueueListCache();
+    AddSC_QueueListCache();
 }
-
-#endif /* _QUEUE_LIST_CACHE_LOADER_H_ */
