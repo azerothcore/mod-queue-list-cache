@@ -9,14 +9,13 @@
 #include "Config.h"
 #include "Chat.h"
 
-// using namespace Acore::ChatCommands;
+using namespace Acore::ChatCommands;
 
 class QueueListCache_Command : public CommandScript
 {
 public:
     QueueListCache_Command() : CommandScript("QueueListCache_Command") { }
 
-    /* New api chat commands
     ChatCommandTable GetCommands() const override
     {
         static ChatCommandTable queueShowArenaCommandTable = // .queue show arena
@@ -42,55 +41,26 @@ public:
         };
 
         return commandTable;
-    }*/
-
-    // Old api, need replace after start support new chat command api
-    std::vector<ChatCommand> GetCommands() const override
-    {
-        static std::vector<ChatCommand> queueShowArenaCommandTable // .queue show arena
-        {
-            { "rated",   SEC_PLAYER,  true,  &HandleQueueShowArenaRatedCommand,      "" },
-            { "normal",  SEC_PLAYER,  true,  &HandleQueueShowArenaNormalCommand,     "" },
-        };
-
-        static std::vector<ChatCommand> queueShowCommandTable = // .queue show
-        {
-            { "arena",  SEC_PLAYER, true, nullptr, "", queueShowArenaCommandTable },
-            { "bg",     SEC_PLAYER,         false,  &HandleQueueShowBgCommand, "" }
-        };
-
-        static std::vector<ChatCommand> queueCommandTable = // .queue
-        {
-            { "show",   SEC_PLAYER, true, nullptr, "", queueShowCommandTable }
-        };
-
-        static std::vector<ChatCommand> commandTable =
-        {
-            { "queue",  SEC_PLAYER, true, nullptr, "", queueCommandTable }
-        };
-
-        return commandTable;
     }
 
-    static bool HandleQueueShowArenaRatedCommand(ChatHandler* handler, char const* /*args*/)
+    static bool HandleQueueShowArenaRatedCommand(ChatHandler* handler)
     {
         sQueueListCache->ShowArenaRated(handler);
         return true;
     }
 
-    static bool HandleQueueShowArenaNormalCommand(ChatHandler* handler, char const* /*args*/)
+    static bool HandleQueueShowArenaNormalCommand(ChatHandler* handler)
     {
         sQueueListCache->ShowArenaNonRated(handler);
         return true;
     }
 
-    static bool HandleQueueShowBgCommand(ChatHandler* handler, char const* /*args*/)
+    static bool HandleQueueShowBgCommand(ChatHandler* handler)
     {
         sQueueListCache->ShowBg(handler);
         return true;
     }
 };
-
 
 class QueueListCache_World : public WorldScript
 {
