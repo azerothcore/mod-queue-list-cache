@@ -29,7 +29,7 @@ namespace
         uint32>; // players need
 
     using QueueBgTemplate = std::tuple<
-        char const*, // bg name
+        std::string, // bg name
         uint32, // level min
         uint32, // level max
         uint32, // queued total
@@ -202,7 +202,7 @@ void QueueListCache::UpdateBg()
         if (!bracketEntry)
             return std::nullopt;
 
-        char const* bgName = bg->GetName();
+        std::string bgName = bg->GetName();
         uint32 MinPlayers = bg->GetMinPlayersPerTeam();
         uint32 MaxPlayers = MinPlayers * 2;
         uint32 q_min_level = std::min(bracketEntry->minLevel, (uint32)80);
@@ -227,7 +227,7 @@ void QueueListCache::UpdateBg()
         if (!bracketEntry)
             return std::nullopt;
 
-        char const* bgName = bg->GetName();
+        std::string bgName = bg->GetName();
         uint32 MinPlayers = bg->GetMinPlayersPerTeam();
         uint32 MaxPlayers = MinPlayers * 2;
         uint32 q_min_level = std::min(bracketEntry->minLevel, (uint32)80);
