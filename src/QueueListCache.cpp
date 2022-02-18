@@ -332,7 +332,7 @@ void QueueListCache::ShowBg(ChatHandler* handler)
         for (auto const& [bgName, minLevel, maxLevel, qTotal, MaxPlayers] : listQueue)
         {
             // Queue status
-            handler->PSendSysMessage("> %u-%u %s: %u/%u", minLevel, maxLevel, bgName, qTotal, MaxPlayers);
+            handler->PSendSysMessage("> %u-%u %s: %u/%u", minLevel, maxLevel, bgName.c_str(), qTotal, MaxPlayers);
         }
     };
 
