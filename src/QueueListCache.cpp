@@ -12,44 +12,6 @@
 #include "DBCStores.h"
 #include "Log.h"
 #include "Optional.h"
-#include "TaskScheduler.h"
-
-namespace
-{
-    using QueueArenaRatedTemplate = std::tuple<
-        char const*, // team name
-        uint8, // arena type
-        uint32>; // team rating
-
-    using QueueArenaNonRatedTemplate = std::tuple<
-        std::string, // arena type
-        uint32, // level min
-        uint32, // level max
-        uint32, // queued total
-        uint32>; // players need
-
-    using QueueBgTemplate = std::tuple<
-        std::string, // bg name
-        uint32, // level min
-        uint32, // level max
-        uint32, // queued total
-        uint32>; // players need
-
-    // Core queue arena
-    std::vector<QueueArenaRatedTemplate> queueArenaRatedList;
-    std::vector<QueueArenaNonRatedTemplate> queueArenaNonRatedList;
-
-    // Core queue bg
-    std::vector<QueueBgTemplate> queueBgNormalList;
-    std::vector<QueueBgTemplate> queueBgPremadeList;
-
-    // Modules queue bg
-    std::vector<QueueBgTemplate> queueCFBGList; // mod-cfbg
-
-    TaskScheduler scheduler;
-
-    bool _isEnableSystem = false;
-}
 
 QueueListCache* QueueListCache::instance()
 {
@@ -72,7 +34,7 @@ void QueueListCache::Init(bool reload /*= false*/)
     scheduler.CancelAll();
 
     // Make new task for update all cache
-    scheduler.Schedule(Seconds(sConfigMgr->GetOption<uint32>("QLC.Update.Delay", 5)), [&](TaskContext context)
+    scheduler.Schedule(Seconds(sConfigMgr->GetOption<uint32>("QLC.Update.Delay", 5)), [this](TaskContext context)
     {
         UpdateArenaRated();
         UpdateArenaNonRated();
@@ -127,7 +89,7 @@ void QueueListCache::UpdateArenaRated()
                     if (!team)
                         continue;
 
-                    queueArenaRatedList.emplace_back(team->GetName().c_str(), itr->ArenaType, itr->ArenaTeamRating);
+                    queueArenaRatedList.emplace_back(team->GetName(), itr->ArenaType, itr->ArenaTeamRating);
                 }
             }
         }
@@ -138,51 +100,67 @@ void QueueListCache::UpdateArenaNonRated()
 {
     queueArenaNonRatedList.clear();
 
-    auto GetTemplate = [&](BattlegroundQueue& bgQueue, BattlegroundBracketId bracketID) -> Optional<QueueArenaNonRatedTemplate>
+    auto AddCache = [this](BattlegroundQueueTypeId qtype, BattlegroundBracketId bracket)
     {
-        Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(bgQueue.GetBGTypeID());
-        if (!bg || bg->isBattleground())
-            return std::nullopt;
+        BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(qtype);
 
-        PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketById(bg->GetMapId(), bracketID);
-        if (!bracketEntry)
-            return std::nullopt;
+        // Skip if all empty
+        if (bgQueue.IsAllQueuesEmpty(bracket))
+            return;
 
-        uint8 arenaType = bgQueue.GetArenaType();
+        for (uint8 ii = BG_QUEUE_NORMAL_ALLIANCE; ii <= BG_QUEUE_NORMAL_HORDE; ii++)
+        {
+            for (auto const& groupInfo : bgQueue.m_QueuedGroups[bracket][ii])
+            {
+                Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(BattlegroundTypeId(groupInfo->BgTypeId));
+                if (!bg || bg->isBattleground())
+                    continue;
 
-        if (!arenaType)
-            return std::nullopt;
+                PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketById(bg->GetMapId(), BattlegroundBracketId(groupInfo->BracketId));
+                if (!bracketEntry)
+                    continue;
 
-        auto arenatype = Acore::StringFormat("%uv%u", arenaType, arenaType);
-        uint32 playersNeed = ArenaTeam::GetReqPlayersForType(arenaType);
-        uint32 minLevel = std::min(bracketEntry->minLevel, (uint32)80);
-        uint32 maxLevel = std::min(bracketEntry->maxLevel, (uint32)80);
-        uint32 qPlayers = bgQueue.GetPlayersCountInGroupsQueue(bracketID, BG_QUEUE_NORMAL_HORDE) + bgQueue.GetPlayersCountInGroupsQueue(bracketID, BG_QUEUE_NORMAL_ALLIANCE);
+                auto arenaType = groupInfo->ArenaType;
+                if (!arenaType)
+                    continue;
 
-        if (!qPlayers)
-            return std::nullopt;
+                auto arenaTypeString = Acore::StringFormatFmt("{}v{}", arenaType, arenaType);
+                uint32 playersNeed = ArenaTeam::GetReqPlayersForType(arenaType);
+                uint32 minLevel = std::min(bracketEntry->minLevel, (uint32)80);
+                uint32 maxLevel = std::min(bracketEntry->maxLevel, (uint32)80);
+                uint32 qPlayers = bgQueue.GetPlayersCountInGroupsQueue(bracket, BG_QUEUE_NORMAL_HORDE) + bgQueue.GetPlayersCountInGroupsQueue(bracket, BG_QUEUE_NORMAL_ALLIANCE);
+                if (!qPlayers)
+                    continue;
 
-        return std::make_tuple(arenatype, minLevel, maxLevel, qPlayers, playersNeed);
+                /*
+                    std::string, // arena type
+                    uint32, // level min
+                    uint32, // level max
+                    uint32, // queued total
+                    uint32> // players need
+                */
+
+                bool found = false;
+
+                for (auto& [_arenaType, __, ___, _qTotal, _____] : queueArenaNonRatedList)
+                {
+                    if (_arenaType == arenaTypeString)
+                    {
+                        _qTotal = qPlayers;
+                        found = true;
+                    }
+                }
+
+                if (!found)
+                    queueArenaNonRatedList.emplace_back(arenaTypeString, minLevel, maxLevel, qPlayers, playersNeed);
+            }
+        }
     };
 
     // Non rated arena
-    for (uint32 qtype = BATTLEGROUND_QUEUE_2v2; qtype < MAX_BATTLEGROUND_QUEUE_TYPES; ++qtype)
-    {
-        BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(BattlegroundQueueTypeId(qtype));
-
-        for (uint32 bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
-        {
-            BattlegroundBracketId bracketID = BattlegroundBracketId(bracket);
-
-            // Skip if all empty
-            if (bgQueue.IsAllQueuesEmpty(bracketID))
-                continue;
-
-            auto _queueList = GetTemplate(bgQueue, bracketID);
-            if (_queueList)
-                queueArenaNonRatedList.emplace_back(*_queueList);
-        }
-    }
+    for (uint8 qtype = BATTLEGROUND_QUEUE_2v2; qtype < BATTLEGROUND_QUEUE_5v5; ++qtype)
+        for (uint8 bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
+            AddCache(BattlegroundQueueTypeId(qtype), BattlegroundBracketId(bracket));
 }
 
 void QueueListCache::UpdateBg()
@@ -191,79 +169,89 @@ void QueueListCache::UpdateBg()
     queueBgPremadeList.clear();
     queueCFBGList.clear();
 
-    auto GetTemplate = [&](BattlegroundQueue& bgQueue, BattlegroundBracketId bracketID,
-        BattlegroundQueueGroupTypes queueHorde, BattlegroundQueueGroupTypes queueAlliance) -> Optional<QueueBgTemplate>
+    auto AddCacheToVector = [](QueueBgList* queueList, GroupQueueInfo const* groupQueueInfo, BattlegroundQueue* bgQueue, BattlegroundBracketId bracket)
     {
-        Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(bgQueue.GetBGTypeID());
+        Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(BattlegroundTypeId(groupQueueInfo->BgTypeId));
         if (!bg || bg->isArena())
-            return std::nullopt;
+            return;
 
-        PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketById(bg->GetMapId(), bracketID);
+        PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketById(bg->GetMapId(), BattlegroundBracketId(groupQueueInfo->BracketId));
         if (!bracketEntry)
-            return std::nullopt;
+            return;
 
-        std::string bgName = bg->GetName();
         uint32 MinPlayers = bg->GetMinPlayersPerTeam();
         uint32 MaxPlayers = MinPlayers * 2;
-        uint32 q_min_level = std::min(bracketEntry->minLevel, (uint32)80);
-        uint32 q_max_level = std::min(bracketEntry->maxLevel, (uint32)80);
-        uint32 qHorde = bgQueue.GetPlayersCountInGroupsQueue(bracketID, queueHorde);
-        uint32 qAlliance = bgQueue.GetPlayersCountInGroupsQueue(bracketID, queueAlliance);
-        auto qTotal = qHorde + qAlliance;
+        uint32 minLevel = std::min(bracketEntry->minLevel, (uint32)80);
+        uint32 maxLevel = std::min(bracketEntry->maxLevel, (uint32)80);
 
-        if (!qTotal)
-            return std::nullopt;
+        auto playerCountInQueues = bgQueue->GetPlayersCountInGroupsQueue(bracket, BattlegroundQueueGroupTypes(groupQueueInfo->GroupType));
+        if (!playerCountInQueues)
+            return;
 
-        return std::make_tuple(bgName, q_min_level, q_max_level, qTotal, MaxPlayers);
+        ASSERT(queueList, "> queueList is nullptr!");
+
+        /*
+            std::string, // bg name
+            uint32, // level min
+            uint32, // level max
+            uint32, // queued total
+            uint32> // players need
+        */
+
+        bool found = false;
+
+        for (auto& [bgName, __, ___, _qTotal, ____] : *queueList)
+        {
+            if (bgName == bg->GetName())
+            {
+                _qTotal = playerCountInQueues;
+                found = true;
+            }
+        }
+
+        if (!found)
+            queueList->emplace_back(bg->GetName(), minLevel, maxLevel, playerCountInQueues, MaxPlayers);
     };
 
-    auto GetTemplateCFBG = [&](BattlegroundQueue& bgQueue, BattlegroundBracketId bracketID, BattlegroundQueueGroupTypes queueType) -> Optional<QueueBgTemplate>
+    auto AddCache = [this, &AddCacheToVector](Optional<bool> isPremade, BattlegroundQueueTypeId qtype, BattlegroundBracketId bracket, BattlegroundQueueGroupTypes queue1, Optional<BattlegroundQueueGroupTypes> queue2 = {})
     {
-        Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(bgQueue.GetBGTypeID());
-        if (!bg || bg->isArena())
-            return std::nullopt;
+        BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(qtype);
 
-        PvPDifficultyEntry const* bracketEntry = GetBattlegroundBracketById(bg->GetMapId(), bracketID);
-        if (!bracketEntry)
-            return std::nullopt;
+        // Skip if all empty
+        if (bgQueue.IsAllQueuesEmpty(bracket))
+            return;
 
-        std::string bgName = bg->GetName();
-        uint32 MinPlayers = bg->GetMinPlayersPerTeam();
-        uint32 MaxPlayers = MinPlayers * 2;
-        uint32 q_min_level = std::min(bracketEntry->minLevel, (uint32)80);
-        uint32 q_max_level = std::min(bracketEntry->maxLevel, (uint32)80);
-        auto qTotal = bgQueue.GetPlayersCountInGroupsQueue(bracketID, queueType);
+        QueueBgList* queueCacheList = nullptr;
 
-        if (!qTotal)
-            return std::nullopt;
+        if (isPremade && *isPremade && queue2)
+            queueCacheList = &queueBgPremadeList;
+        else if (isPremade && !*isPremade && queue2)
+            queueCacheList = &queueBgNormalList;
+        else if (!isPremade && !queue2)
+            queueCacheList = &queueCFBGList;
+        else
+            ABORT("> Unknown QueueBgTemplate");
 
-        return std::make_tuple(bgName, q_min_level, q_max_level, qTotal, MaxPlayers);
+        ASSERT(queueCacheList, "> queueCacheList is nullptr!");
+
+        uint32 start = static_cast<uint32>(queue1);
+        uint32 end = static_cast<uint32>(queue2 ? *queue2 : queue1);
+
+        for (auto const& groupInfo : bgQueue.m_QueuedGroups[bracket][static_cast<uint32>(queue1)])
+            AddCacheToVector(queueCacheList, groupInfo, &bgQueue, bracket);
+
+        if (queue2)
+            for (auto const& groupInfo : bgQueue.m_QueuedGroups[bracket][static_cast<uint32>(*queue2)])
+                AddCacheToVector(queueCacheList, groupInfo, &bgQueue, bracket);
     };
 
     for (uint32 qtype = BATTLEGROUND_QUEUE_AV; qtype < MAX_BATTLEGROUND_QUEUE_TYPES; ++qtype)
     {
-        BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(BattlegroundQueueTypeId(qtype));
-
         for (uint32 bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
         {
-            BattlegroundBracketId bracketID = BattlegroundBracketId(bracket);
-
-            // Skip if all empty
-            if (bgQueue.IsAllQueuesEmpty(bracketID))
-                continue;
-
-            Optional<QueueBgTemplate> _queueListNormal = GetTemplate(bgQueue, bracketID, BG_QUEUE_NORMAL_HORDE, BG_QUEUE_NORMAL_ALLIANCE);
-            Optional<QueueBgTemplate> _queueListPremade = GetTemplate(bgQueue, bracketID, BG_QUEUE_PREMADE_HORDE, BG_QUEUE_PREMADE_ALLIANCE);
-            Optional<QueueBgTemplate> _queueListCFBG = GetTemplateCFBG(bgQueue, bracketID, BattlegroundQueueGroupTypes(4));
-
-            if (_queueListNormal)
-                queueBgNormalList.emplace_back(*_queueListNormal);
-
-            if (_queueListPremade)
-                queueBgPremadeList.emplace_back(*_queueListPremade);
-
-            if (_queueListCFBG)
-                queueCFBGList.emplace_back(*_queueListCFBG);
+            AddCache(false, BattlegroundQueueTypeId(qtype), BattlegroundBracketId(bracket), BG_QUEUE_NORMAL_ALLIANCE, BG_QUEUE_NORMAL_HORDE);
+            AddCache(true, BattlegroundQueueTypeId(qtype), BattlegroundBracketId(bracket), BG_QUEUE_PREMADE_ALLIANCE, BG_QUEUE_PREMADE_HORDE);
+            AddCache({}, BattlegroundQueueTypeId(qtype), BattlegroundBracketId(bracket), BG_QUEUE_CFBG);
         }
     }
 }
@@ -287,7 +275,7 @@ void QueueListCache::ShowArenaRated(ChatHandler* handler)
         for (auto const& [teamName, arenaType, teamRating] : queueArenaRatedList)
         {
             // Queue status
-            handler->PSendSysMessage("> %s (%uv%u): %u", teamName, arenaType, arenaType, teamRating);
+            handler->PSendSysMessage("> %s (%uv%u): %u", teamName.c_str(), arenaType, arenaType, teamRating);
         }
     }
 }
