@@ -234,8 +234,6 @@ void QueueListCache::UpdateBg()
 
         ASSERT(queueCacheList, "> queueCacheList is nullptr!");
 
-        uint32 start = static_cast<uint32>(queue1);
-
         for (auto const& groupInfo : bgQueue.m_QueuedGroups[bracket][static_cast<uint32>(queue1)])
             AddCacheToVector(queueCacheList, groupInfo, &bgQueue, bracket);
 
