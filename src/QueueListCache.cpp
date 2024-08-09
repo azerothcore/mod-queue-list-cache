@@ -272,7 +272,7 @@ void QueueListCache::ShowArenaRated(ChatHandler* handler)
         for (auto const& [teamName, arenaType, teamRating] : queueArenaRatedList)
         {
             // Queue status
-            handler->PSendSysMessage("> %s (%uv%u): %u", teamName.c_str(), arenaType, arenaType, teamRating);
+            handler->PSendSysMessage("> {} ({}v{}): {}", teamName.c_str(), arenaType, arenaType, teamRating);
         }
     }
 }
@@ -296,7 +296,7 @@ void QueueListCache::ShowArenaNonRated(ChatHandler* handler)
         for (auto const& [arenaType, minLevel, maxLevel, qTotal, MaxPlayers] : queueArenaNonRatedList)
         {
             // Queue status
-            handler->PSendSysMessage("> %u-%u %s: %u/%u", minLevel, maxLevel, arenaType.c_str(), qTotal, MaxPlayers);
+            handler->PSendSysMessage("> {}-{} {}: {}/{}", minLevel, maxLevel, arenaType.c_str(), qTotal, MaxPlayers);
         }
     }
 }
@@ -317,7 +317,7 @@ void QueueListCache::ShowBg(ChatHandler* handler)
         for (auto const& [bgName, minLevel, maxLevel, qTotal, MaxPlayers] : listQueue)
         {
             // Queue status
-            handler->PSendSysMessage("> %u-%u %s: %u/%u", minLevel, maxLevel, bgName.c_str(), qTotal, MaxPlayers);
+            handler->PSendSysMessage("> {}-{} {}: {}/{}", minLevel, maxLevel, bgName.c_str(), qTotal, MaxPlayers);
         }
     };
 
