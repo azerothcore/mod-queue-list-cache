@@ -124,7 +124,7 @@ void QueueListCache::UpdateArenaNonRated()
                 if (!arenaType)
                     continue;
 
-                auto arenaTypeString = Acore::StringFormatFmt("{}v{}", arenaType, arenaType);
+                auto arenaTypeString = Acore::StringFormat("{}v{}", arenaType, arenaType);
                 uint32 playersNeed = ArenaTeam::GetReqPlayersForType(arenaType);
                 uint32 minLevel = std::min(bracketEntry->minLevel, (uint32)80);
                 uint32 maxLevel = std::min(bracketEntry->maxLevel, (uint32)80);
