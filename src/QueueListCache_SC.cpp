@@ -90,5 +90,5 @@ void AddSC_QueueListCache()
 {
     new QueueListCache_Command();
     new QueueListCache_World();
-    new queue_list_npc();
+    new QueueListCache_Npc();
 }

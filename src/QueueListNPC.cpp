@@ -1,26 +1,19 @@
 #include "QueueListNPC.h"
 #include "QueueListCache.h"
 
-enum Gossips
-{
-    Show_RatedArena_Queues = 1,
-    Show_SkirmishArena_Queues = 2,
-    Show_Battleground_Queues = 3
-};
+QueueListCache_Npc::QueueListCache_Npc() : CreatureScript("queue_list_npc") { }
 
-queue_list_npc::queue_list_npc() : CreatureScript("queue_list_npc") { }
-
-bool queue_list_npc::OnGossipHello(Player* player, Creature* creature)
+bool QueueListCache_Npc::OnGossipHello(Player* player, Creature* creature)
 {
-    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_7:25|t Show Rated Arena queues", GOSSIP_SENDER_MAIN, Show_RatedArena_Queues);
-    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_2:25|t Show Skirmish Arena queues", GOSSIP_SENDER_MAIN, Show_SkirmishArena_Queues);
-    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_bg_killxenemies_generalsroom:25|t Show BG queues", GOSSIP_SENDER_MAIN, Show_Battleground_Queues);
+    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_7:25|t Show Rated Arena queues", GOSSIP_SENDER_MAIN, SHOW_RATED_ARENA_QUEUES);
+    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_2:25|t Show Skirmish Arena queues", GOSSIP_SENDER_MAIN, SHOW_SKIRMISH_ARENA_QUEUES);
+    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_bg_killxenemies_generalsroom:25|t Show BG queues", GOSSIP_SENDER_MAIN, SHOW_BATTLEGROUND_QUEUES);
 
     player->PlayerTalkClass->SendGossipMenu(1, creature->GetGUID());
     return true;
 }
 
-bool queue_list_npc::OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
+bool QueueListCache_Npc::OnGossipSelect(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
 {
     player->PlayerTalkClass->ClearMenus();
 
@@ -28,13 +21,13 @@ bool queue_list_npc::OnGossipSelect(Player* player, Creature* creature, uint32 /
 
     switch (uiAction)
     {
-        case Show_RatedArena_Queues:
+        case SHOW_RATED_ARENA_QUEUES:
             sQueueListCache->ShowArenaRated(&handler);
             break;
-        case Show_SkirmishArena_Queues:
+        case SHOW_SKIRMISH_ARENA_QUEUES:
             sQueueListCache->ShowArenaNonRated(&handler);
             break;
-        case Show_Battleground_Queues:
+        case SHOW_BATTLEGROUND_QUEUES:
             sQueueListCache->ShowBg(&handler);
             break;
     }
