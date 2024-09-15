@@ -1,7 +1,7 @@
 #include "QueueListNPC.h"
 #include "QueueListCache.h"
 
-enum Gossips
+enum Gossips : uint8
 {
     Show_RatedArena_Queues = 1,
     Show_SkirmishArena_Queues = 2,
