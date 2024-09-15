@@ -1,6 +1,13 @@
 #include "QueueListNPC.h"
 #include "QueueListCache.h"
 
+enum Gossips
+{
+    Show_RatedArena_Queues = 1,
+    Show_SkirmishArena_Queues = 2,
+    Show_Battleground_Queues = 3
+};
+
 queue_list_npc::queue_list_npc() : CreatureScript("queue_list_npc") { }
 
 bool queue_list_npc::OnGossipHello(Player* player, Creature* creature)
@@ -21,13 +28,13 @@ bool queue_list_npc::OnGossipSelect(Player* player, Creature* creature, uint32 /
 
     switch (uiAction)
     {
-        case 1:
+        case Show_RatedArena_Queues:
             sQueueListCache->ShowArenaRated(&handler);
             break;
-        case 2:
+        case Show_SkirmishArena_Queues:
             sQueueListCache->ShowArenaNonRated(&handler);
             break;
-        case 3:
+        case Show_Battleground_Queues:
             sQueueListCache->ShowBg(&handler);
             break;
     }
