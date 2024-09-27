@@ -26,7 +26,7 @@
 #                     1 - Enabled
 #
 
-QLC.Enable = 0
+QLC.Enable = 1
 
 #
 #    QLC.Update.Delay
