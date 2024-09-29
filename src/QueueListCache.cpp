@@ -125,6 +125,11 @@ void QueueListCache::UpdateArenaNonRated()
                     continue;
 
                 auto arenaTypeString = Acore::StringFormat("{}v{}", arenaType, arenaType);
+                constexpr uint32 ARENA_TYPE_3v3_SOLO = 4;
+                if (arenaType == ARENA_TYPE_3v3_SOLO) {
+                    arenaTypeString = Acore::StringFormat("3v3soloQ");
+                }
+
                 uint32 playersNeed = ArenaTeam::GetReqPlayersForType(arenaType);
                 uint32 minLevel = std::min(bracketEntry->minLevel, (uint32)80);
                 uint32 maxLevel = std::min(bracketEntry->maxLevel, (uint32)80);
@@ -157,8 +162,9 @@ void QueueListCache::UpdateArenaNonRated()
         }
     };
 
+    constexpr uint32 BATTLEGROUND_QUEUE_3v3_SOLO = 12; // this allows to include queue_1v1 (battleground_queue value 11) and 3v3soloQ (12)
     // Non rated arena
-    for (uint8 qtype = BATTLEGROUND_QUEUE_2v2; qtype < BATTLEGROUND_QUEUE_5v5; ++qtype)
+    for (uint8 qtype = BATTLEGROUND_QUEUE_2v2; qtype <= BATTLEGROUND_QUEUE_3v3_SOLO; ++qtype)
         for (uint8 bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
             AddCache(BattlegroundQueueTypeId(qtype), BattlegroundBracketId(bracket));
 }
