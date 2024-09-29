@@ -14,10 +14,10 @@ bool QueueListCache_Npc::OnGossipHello(Player* player, Creature* creature)
         return true;
     }
 
-    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_7:25|t Show Rated Arena queues", GOSSIP_SENDER_MAIN, SHOW_RATED_ARENA_QUEUES);
-    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_2:25|t Show Skirmish Arena queues", GOSSIP_SENDER_MAIN, SHOW_SKIRMISH_ARENA_QUEUES);
-    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_bg_killxenemies_generalsroom:25|t Show BG queues", GOSSIP_SENDER_MAIN, SHOW_BATTLEGROUND_QUEUES);
-    AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface\\gossipframe\\dailyactivequesticon:16|tHelp", GOSSIP_SENDER_MAIN, ACTION_HELP);
+    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_7:30:30:-20:0|t Show Rated Arena queues", GOSSIP_SENDER_MAIN, SHOW_RATED_ARENA_QUEUES);
+    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_arena_2v2_2:30:30:-20:0|t Show Skirmish Arena queues", GOSSIP_SENDER_MAIN, SHOW_SKIRMISH_ARENA_QUEUES);
+    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "|TInterface\\icons\\Achievement_bg_killxenemies_generalsroom:30:30:-20:0|t Show BG queues", GOSSIP_SENDER_MAIN, SHOW_BATTLEGROUND_QUEUES);
+    AddGossipItemFor(player, GOSSIP_ICON_CHAT, "|TInterface/ICONS/inv_misc_questionmark:30:30:-20:0|t Help", GOSSIP_SENDER_MAIN, ACTION_HELP);
 
     player->PlayerTalkClass->SendGossipMenu(1, creature->GetGUID());
     return true;
@@ -50,7 +50,7 @@ bool QueueListCache_Npc::OnGossipSelect(Player* player, Creature* creature, uint
             CloseGossipMenuFor(player);
             break;
         case ACTION_HELP:
-            AddGossipItemFor(player, 11, "<- Back", GOSSIP_SENDER_MAIN, SHOW_MAIN_MENU);
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "<- Back", GOSSIP_SENDER_MAIN, SHOW_MAIN_MENU);
             SendGossipMenuFor(player, NPC_TEXT_ENTRY_QUEUE_LIST, creature->GetGUID());
             break;
         default:
