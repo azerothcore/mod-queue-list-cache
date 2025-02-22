@@ -66,7 +66,11 @@ public:
 class QueueListCache_World : public WorldScript
 {
 public:
-    QueueListCache_World() : WorldScript("QueueListCache_World") { }
+    QueueListCache_World() : WorldScript("QueueListCache_World", {
+        WORLDHOOK_ON_BEFORE_CONFIG_LOAD,
+        WORLDHOOK_ON_STARTUP,
+        WORLDHOOK_ON_UPDATE
+    }) { }
 
     void OnBeforeConfigLoad(bool reload) override
     {
