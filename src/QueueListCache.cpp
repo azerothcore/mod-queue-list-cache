@@ -78,19 +78,13 @@ void QueueListCache::UpdateArenaRated()
             if (bgQueue.IsAllQueuesEmpty(bracketID))
                 continue;
 
-            for (uint8 ii = BG_QUEUE_PREMADE_ALLIANCE; ii <= BG_QUEUE_PREMADE_HORDE; ii++)
+            for (auto const& itr : bgQueue.m_QueuedGroups[bracketID][BG_QUEUE_RATED_ARENA])
             {
-                for (auto const& itr : bgQueue.m_QueuedGroups[bracketID][ii])
-                {
-                    if (!itr->IsRated)
-                        continue;
+                ArenaTeam* team = sArenaTeamMgr->GetArenaTeamById(itr->ArenaTeamId);
+                if (!team)
+                    continue;
 
-                    ArenaTeam* team = sArenaTeamMgr->GetArenaTeamById(itr->ArenaTeamId);
-                    if (!team)
-                        continue;
-
-                    queueArenaRatedList.emplace_back(team->GetName(), itr->ArenaType, itr->ArenaTeamRating);
-                }
+                queueArenaRatedList.emplace_back(team->GetName(), itr->ArenaType, itr->ArenaTeamRating);
             }
         }
     }
@@ -248,7 +242,9 @@ void QueueListCache::UpdateBg()
                 AddCacheToVector(queueCacheList, groupInfo, &bgQueue, bracket);
     };
 
-    for (uint32 qtype = BATTLEGROUND_QUEUE_AV; qtype < MAX_BATTLEGROUND_QUEUE_TYPES; ++qtype)
+    // Battleground queue types only. The arena types above them have no premade or normal
+    // faction buckets to cache, and their rated teams are listed by UpdateArenaRated.
+    for (uint32 qtype = BATTLEGROUND_QUEUE_AV; qtype <= BATTLEGROUND_QUEUE_RB; ++qtype)
     {
         for (uint32 bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
         {
